@@ -1,0 +1,6 @@
+$(OBJ_DIR)$Smain.$O: $(EX)
+	$(CCC) $(CFLAGS) -c $(EX) $(OBJ_OUT)$(OBJ_DIR)$S$(basename $(notdir $(EX))).$O
+
+$(BIN_DIR)/main$E: $(OR_TOOLS_LIBS) $(OBJ_DIR)$Smain.$O
+	$(CCC) $(CFLAGS) $(OBJ_DIR)$Smain.$O $(OR_TOOLS_LNK) \
+ $(OR_TOOLS_LD_FLAGS) $(EXE_OUT)$(BIN_DIR)$Smain$E
