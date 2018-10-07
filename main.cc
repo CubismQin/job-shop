@@ -1,4 +1,5 @@
 #include "ortools/constraint_solver/constraint_solver.h"
+#include "cxxopts.hpp"
 #include <iostream>
 #include <vector>
 #include <unordered_map>
@@ -31,6 +32,7 @@ class Data{
             machines.push_back(jobMachines);
             times.push_back(jobTimes);
         }
+        return true;
       }
       else if(fileType == TAILLARD){
         //trzeba zaimplementowac parsowanie plikow w tym drugim formacie
@@ -127,8 +129,11 @@ class Data{
       }
     }
 
-    if(solver.Solve(mainPhase, objectiveMonitor, collector))
-    std::cout << std::to_string(collector->objective_value(0))<< std::endl;
+    if(!solver.Solve(mainPhase, objectiveMonitor, collector))
+    {
+      std::cout<<"Could not solve..."<<std::endl;
+    }
+    else{
 
     /* #cringe, napewno mozna napisac to wyswietlanie lepiej ale narazie
       sam nie wiem o co do konca chodzi w tym kodzie xD;
@@ -146,7 +151,8 @@ class Data{
       }
 
     }
-
+    
+    std::cout << std::to_string(collector->objective_value(0))<< std::endl;
     for(int i=0; i<JOB_COUNT; i++)
     {
       for(int j=0; j<times[i].size(); j++)
@@ -154,23 +160,35 @@ class Data{
         std::string id = "Job_" + std::to_string(i)+"_"+std::to_string(j);
         std::cout<<taskTimes[id];
          if(j < times[i].size()-1)
+         {
            std::cout<<" ";
+         }
       }
       std::cout<<std::endl;
     }
   }
-
+}
 
 int main(int argc, char** argv)
 {
-  if(argc == 1)
+  cxxopts::Options options("jobshop", "Solves job-shop scheduling problem");
+  options.add_options()
+  ("f,file", "File name", cxxopts::value<std::string>())
+  ("taillard", "Use taillard format");
+  auto result = options.parse(argc, argv);
+  
+  if(!result.count("file"))
   {
-    std::cout<<"No input file specified, terminating...\n";
+    std::cout<<options.help();
     return 1;
   }
+  std::string filename = result["file"].as<std::string>();
   Data data;
-  std::string filename(argv[1]);
-  data.load(filename, ORLIB);
+  if(!data.load(filename, result["taillard"].as<bool>()?TAILLARD:ORLIB))
+  {
+    std::cout<<"Failed to load, maybe the file is corrupted?"<<std::endl;
+    return 1;
+  }
   run(data);
   return 0;
 }
